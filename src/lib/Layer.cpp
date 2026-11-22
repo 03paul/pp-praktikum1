@@ -1,4 +1,5 @@
 #include <Layer.h>
+#include<stdexcept>
 
 #include <MathUtils.h>
 
@@ -45,6 +46,135 @@ void Layer::setParameters(std::vector<std::vector<double>> weights, std::vector<
     this->weights = std::move(weights);
     this->bias = std::move(bias);
 }
+//Task 5a
+void Layer::forwardPropagation(
+    const std::vector<double>& previousLayerOutput) {
+    
+    preActivationOutput.assign(layerOutputSize, 0.0);
+    activationOutput.assign(layerOutputSize, 0.0);
+
+for(std::size_t i = 0; i < layerOutputSize; ++i) {
+        double weightedSum = 0.0;
+
+        for(std::size_t j = 0; j < layerInputSize; ++j) {
+            weightedSum =weightedSum+ weights[i][j] * previousLayerOutput[j];
+        }
+        preActivationOutput[i] = weightedSum + bias[i];
+        activationOutput[i] = activationFunction->activation(preActivationOutput[i]);
+    }
+}
+
+//5b
+void Layer::backwardPropagation(
+    const std::vector<double>& dCurrentLayerOutput,
+    const std::vector<double>& previousLayerOutput) {
+    
+    if(activationFunction == nullptr) {
+        throw std::logic_error("Layer has no activation function");
+    }
+    //gradient calcultaion before activation
+    std::vector<double> dPreActivation(layerOutputSize, 0.0);
+
+    for(std::size_t i = 0; i < layerOutputSize; ++i) {
+        double slope = activationFunction->activationBackwards(preActivationOutput[i]);
+        dPreActivation[i] = dCurrentLayerOutput[i] * slope;
+    }
+
+//gradient calculation for each weight 
+   
+
+dWeights.assign(layerOutputSize, std::vector<double>(layerInputSize, 0.0));
+    for(std::size_t i = 0; i < layerOutputSize; ++i) {
+        for(std::size_t j = 0; j < layerInputSize; ++j) {
+            dWeights[i][j] = dPreActivation[i] * previousLayerOutput[j];
+        }
+    
+    }
+
+    //store the bias gradient
+    dBias= dPreActivation;
+
+    //Add the samples gradient to the accumulated total
+    
+
+for(std::size_t i = 0; i < layerOutputSize; ++i) {
+        for(std::size_t j = 0; j < layerInputSize; ++j) {
+            accumulatedDWeights[i][j] = accumulatedDWeights[i][j] + dWeights[i][j];
+        }
+        accumulatedDBias[i] = accumulatedDBias[i] + dBias[i];
+    }
+    numProcessedSamples++;
+
+    //Calculate the gradient for the previous layer's output
+    dPreviousLayerOutput.assign(layerInputSize, 0.0);
+    for(std::size_t j = 0; j < layerInputSize; ++j) {
+        for(std::size_t i = 0; i < layerOutputSize; ++i) {
+            dPreviousLayerOutput[j] += weights[i][j] * dPreActivation[i];
+        }
+    }
+
+}
+
+
+
+//5c
+void Layer::updateParameters(
+    const std::vector<std::vector<double>>& dWeights,
+    const std::vector<double>& dBias,
+    double learningRate) {
+
+    for (std::size_t i = 0; i < layerOutputSize; i++) {
+
+        //Update the weights of this neuron
+        for (std::size_t j = 0; j < layerInputSize; j++) {
+            weights[i][j] =
+                weights[i][j] - learningRate * dWeights[i][j];
+        }
+
+        //Update the bias once per neuron
+        bias[i] = bias[i] - learningRate * dBias[i];
+    }
+}
+
+//5d
+void Layer::commitToWeights(double learningRate) {
+
+    //Stop if no samples have been processed
+    if (numProcessedSamples == 0) {
+        return;
+    }
+
+    double sampleCount = static_cast<double>(numProcessedSamples);
+
+    //Calculate the average gradients
+    for (std::size_t i = 0; i < layerOutputSize; i++) {
+        for (std::size_t j = 0; j < layerInputSize; j++) {
+            accumulatedDWeights[i][j] =
+                accumulatedDWeights[i][j] / sampleCount;
+        }
+
+        accumulatedDBias[i] =
+            accumulatedDBias[i] / sampleCount;
+    }
+
+    //Apply the update using the method from 5c
+    updateParameters(
+        accumulatedDWeights, accumulatedDBias, learningRate);
+
+    //Reset the totals for the next batch
+    for (std::size_t i = 0; i < layerOutputSize; i++) {
+        for (std::size_t j = 0; j < layerInputSize; j++) {
+            accumulatedDWeights[i][j] = 0.0;
+        }
+
+        accumulatedDBias[i] = 0.0;
+    }
+
+    numProcessedSamples = 0;
+}
+
+
+
 
 uint64_t Layer::getId() const {
     return id;
