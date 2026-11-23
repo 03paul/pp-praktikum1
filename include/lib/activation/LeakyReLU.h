@@ -5,6 +5,18 @@
 #include <string>
 
 
-class LeakyReLU {
+namespace dnn{
+
+class LeakyReLU : public ActivationFunction{
+    public:
+
+    LeakyReLU() = default;
+    ~LeakyReLU() = default;
+
+     double activation(double x) override;
+     double activationBackwards(double x) override;
+     std::string getName() const override;
 };
+
+}
 
