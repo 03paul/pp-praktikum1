@@ -11,7 +11,7 @@ return min + (max - min) * result;
 
 double ScaledSigmoid::activationBackwards (double x){
 double result = 1.0 / (1.0 + std::exp(-x));
-return max - min * result * (1 - result);
+return (max - min) * result * (1 - result);
 }
 
 std::string ScaledSigmoid::getName() const{

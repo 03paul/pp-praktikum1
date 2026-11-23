@@ -20,12 +20,12 @@ std::vector<double> normalize(const std::vector<T>& values){
     }
 
     auto it = std::max_element(values.begin(), values.end());
-    double maximum = *it;
+    int maximum = *it;
     //if(maximum == 0)
     std::vector<double> result(values.size(), 0.0);
 
     for (std::size_t i = 0; i < values.size(); i++){
-        result[i] = values[i] / maximum;
+        result[i] = values[i] / static_cast<double>(maximum);
     }
     return result;
 }
