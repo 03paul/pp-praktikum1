@@ -12,4 +12,34 @@ double sum(const std::vector<double>& values);
 // and every other element is 0.0. Throws std::out_of_range if value is negative or >= numClasses.
 std::vector<double> encodeAsOneHot(double value, std::size_t numClasses);
 
+template<typename T>
+std::vector<double> normalize(const std::vector<T>& values){
+
+    if(values.empty()){
+       return {};
+    }
+
+    auto it = std::max_element(values.begin(), values.end());
+    double maximum = *it;
+    //if(maximum == 0)
+    std::vector<double> result(values.size(), 0.0);
+
+    for (std::size_t i = 0; i < values.size(); i++){
+        result[i] = values[i] / maximum;
+    }
+    return result;
+}
+
+template<typename T>
+std::vector<double> normalize(const std::vector<T>& values, int maxValue){
+    
+    std::vector<double> result(values.size(), 0.0);
+    double divisor = static_cast<double>(maxValue);
+
+    for(std::size_t i = 0; i < values.size(); i++){
+        result[i] = values[i] / divisor;
+    }
+    return result;
+}
+
 }
